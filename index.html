@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>重要日子提醒器</title>
+<meta name="theme-color" content="#c17f4a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="重要日子" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --text: #1a1814;
+    --text2: #6b6760;
+    --text3: #a09d98;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --accent: #c17f4a;
+    --accent-light: #f5e9da;
+    --red: #c94040;
+    --yellow: #c18a2a;
+    --green: #3a8a5a;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header-inner {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .app-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .app-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  /* Tabs */
+  .tabs {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    padding: 0 1.25rem;
+  }
+  .tab {
+    padding: 0 20px;
+    height: 44px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: color 0.15s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+  /* Main */
+  .main { max-width: 600px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.15rem;
+  }
+  /* Upcoming */
+  .upcoming-list { display: flex; flex-direction: column; gap: 10px; }
+  .event-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-left-width: 4px;
+  }
+  .event-card.urgent { border-left-color: var(--red); }
+  .event-card.soon { border-left-color: var(--yellow); }
+  .event-card.normal { border-left-color: var(--green); }
+  .days-badge { min-width: 44px; text-align: center; flex-shrink: 0; }
+  .days-num { font-size: 22px; font-weight: 700; line-height: 1; }
+  .days-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .event-info { flex: 1; min-width: 0; }
+  .event-name { font-size: 15px; font-weight: 500; }
+  .event-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .action-btn {
+    font-size: 13px; padding: 6px 12px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    cursor: pointer; background: none;
+    color: var(--text); white-space: nowrap;
+    flex-shrink: 0; font-family: inherit;
+    transition: background 0.1s;
+  }
+  .action-btn:hover { background: var(--surface2); }
+  /* Contacts grid */
+  .contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .contact-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .contact-card:hover { border-color: var(--border2); }
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .contact-name { font-size: 15px; font-weight: 500; margin-top: 8px; }
+  .contact-role { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  /* Add btn */
+  .add-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; font-size: 14px; padding: 12px;
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    cursor: pointer; background: none;
+    color: var(--text2); width: 100%;
+    font-family: inherit;
+    transition: background 0.1s;
+  }
+  .add-btn:hover { background: var(--surface); }
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    align-items: flex-end; justify-content: center;
+    z-index: 200; padding: 0;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 1.5rem 1.25rem 2rem;
+    width: 100%; max-width: 600px;
+    max-height: 92vh; overflow-y: auto;
+    animation: slideup 0.22s ease;
+  }
+  @keyframes slideup { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 99px; margin: 0 auto 1.25rem; }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 1.1rem; }
+  .form-group { margin-bottom: 12px; }
+  .form-label { font-size: 13px; color: var(--text2); margin-bottom: 5px; display: block; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  input, select, textarea {
+    width: 100%; font-size: 14px; font-family: inherit;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 9px 12px;
+    color: var(--text); outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { height: 72px; resize: none; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1.25rem; justify-content: space-between; align-items: center; }
+  .modal-actions-right { display: flex; gap: 8px; }
+  .btn-primary {
+    background: var(--text); color: var(--surface);
+    border: none; border-radius: var(--radius-sm);
+    padding: 10px 20px; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-secondary {
+    background: none; border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 10px 16px;
+    font-size: 14px; cursor: pointer; color: var(--text);
+    font-family: inherit;
+  }
+  .btn-danger {
+    background: none; border: 1px solid rgba(201,64,64,0.35);
+    border-radius: var(--radius-sm); padding: 10px 16px;
+    font-size: 14px; cursor: pointer; color: var(--red);
+    font-family: inherit;
+  }
+  /* Detail */
+  .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.15rem; }
+  .detail-notes {
+    font-size: 13px; color: var(--text2);
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 1rem; line-height: 1.6;
+  }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+  .gift-section-title {
+    font-size: 14px; font-weight: 500; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .gift-history { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .gift-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+  .gift-item-info { flex: 1; min-width: 0; }
+  .gift-item-name { font-size: 14px; font-weight: 500; }
+  .gift-item-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .gift-item-del {
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); padding: 2px; font-size: 16px; flex-shrink: 0;
+  }
+  .gift-item-del:hover { color: var(--red); }
+  .add-gift-form {
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 12px; margin-top: 8px; display: none;
+  }
+  .add-gift-form.open { display: block; }
+  .icon-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text2); padding: 6px 8px; font-size: 16px;
+    transition: color 0.1s, background 0.1s;
+  }
+  .icon-btn:hover { color: var(--text); background: var(--surface2); }
+  .empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--text3); font-size: 14px;
+  }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 10px; }
+  .section-title { font-size: 16px; font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="app-title"><span class="dot"></span>重要日子</div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('upcoming')"><i class="ti ti-bell"></i> 即将到来</button>
+    <button class="tab" onclick="switchTab('contacts')"><i class="ti ti-users"></i> 联系人</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="section active" id="sec-upcoming">
+    <div class="upcoming-list" id="upcoming-list"></div>
+  </div>
+  <div class="section" id="sec-contacts">
+    <div class="contacts-grid" id="contacts-grid"></div>
+    <button class="add-btn" onclick="openAddContact()" style="margin-top:12px;"><i class="ti ti-plus"></i> 添加联系人</button>
+  </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detail-content"></div>
+    <div class="modal-actions">
+      <button class="btn-danger" onclick="deleteContact()"><i class="ti ti-trash"></i> 删除</button>
+      <div class="modal-actions-right">
+        <button class="btn-secondary" onclick="closeModal('detail-modal')">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 添加/编辑联系人弹窗 -->
+<div class="modal-overlay" id="contact-form-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="contact-form-title">添加联系人</div>
+    <div class="form-group">
+      <label class="form-label">姓名</label>
+      <input type="text" id="cf-name" placeholder="例：陈小明" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">关系</label>
+        <select id="cf-relation">
+          <option>家人</option><option>好友</option><option>同事</option><option>客户</option><option>伴侣</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">公司（选填）</label>
+        <input type="text" id="cf-company" placeholder="例：华远集团" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">重要日子类型</label>
+        <select id="cf-event-type">
+          <option>生日</option><option>结婚纪念日</option><option>合作周年</option><option>入职纪念日</option><option>其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <input type="date" id="cf-date" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">喜好 / 备注</label>
+      <textarea id="cf-notes" placeholder="例：喜欢咖啡、不喜欢甜食..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <div></div>
+      <div class="modal-actions-right">
+        <button class="btn-secondary" onclick="closeModal('contact-form-modal')">取消</button>
+        <button class="btn-primary" onclick="saveContact()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = [
+  { bg: '#EEF0F8', color: '#3C3A89' },
+  { bg: '#E4F3EE', color: '#1A6B4A' },
+  { bg: '#F8EDE8', color: '#8A3A20' },
+  { bg: '#F5EAEF', color: '#7A2848' },
+  { bg: '#E8F2F8', color: '#1A5080' },
+  { bg: '#F8F0E0', color: '#7A5010' },
+];
+
+function daysUntil(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr); target.setHours(0,0,0,0);
+  return Math.round((target - today) / 86400000);
+}
+function getNextDate(d) {
+  const dt = new Date(); dt.setDate(dt.getDate() + d);
+  return dt.toISOString().split('T')[0];
+}
+function initials(name) { return name.slice(0, 2); }
+function urgencyClass(d) { return d <= 7 ? 'urgent' : d <= 14 ? 'soon' : 'normal'; }
+function urgencyColor(d) { return d <= 7 ? '#c94040' : d <= 14 ? '#c18a2a' : '#3a8a5a'; }
+
+let contacts = [
+  { id: 1, name: '妈妈', relation: '家人', company: '', notes: '喜欢护肤品、花茶', color: 0,
+    events: [{ type: '生日', date: getNextDate(5) }],
+    giftsReceived: [{ id: 'r1', name: '真丝围巾', occasion: '生日', date: '2024-05-10', note: '她很喜欢' }],
+    giftsGiven: [{ id: 'g1', name: '蘭蔻护肤礼盒', occasion: '生日', date: '2024-05-10', note: '预算500元' }] },
+  { id: 2, name: '李总', relation: '客户', company: '华远集团', notes: '高尔夫爱好者，偏好高端商务风', color: 1,
+    events: [{ type: '合作周年', date: getNextDate(12) }],
+    giftsReceived: [{ id: 'r2', name: '茅台礼盒', occasion: '合作周年', date: '2023-11-20', note: '' }],
+    giftsGiven: [{ id: 'g2', name: '高尔夫球杆套装', occasion: '合作周年', date: '2023-11-20', note: '2000元预算' }] },
+  { id: 3, name: '王小红', relation: '好友', company: '', notes: '喜欢文艺小物、手账、香薰', color: 2,
+    events: [{ type: '生日', date: getNextDate(3) }],
+    giftsReceived: [],
+    giftsGiven: [{ id: 'g3', name: '森系香薰套装', occasion: '生日', date: '2024-03-22', note: '她特别喜欢' }] },
+  { id: 4, name: '张先生', relation: '客户', company: '鼎盛传媒', notes: '偏好实用型礼物，不喜欢太花哨', color: 4,
+    events: [{ type: '生日', date: getNextDate(28) }],
+    giftsReceived: [], giftsGiven: [] },
+];
+let nextId = 5;
+let currentContactId = null;
+let editingContactId = null;
+
+function renderUpcoming() {
+  const events = [];
+  contacts.forEach(c => c.events.forEach(e => events.push({ contact: c, event: e, days: daysUntil(e.date) })));
+  events.sort((a, b) => a.days - b.days);
+  const list = document.getElementById('upcoming-list');
+  if (!events.length) {
+    list.innerHTML = '<div class="empty-state"><i class="ti ti-calendar-off"></i>暂无即将到来的日子<br>去添加联系人吧！</div>';
+    return;
+  }
+  list.innerHTML = events.map(({ contact: c, event: e, days }) => `
+    <div class="event-card ${urgencyClass(days)}">
+      <div class="days-badge">
+        <div class="days-num" style="color:${urgencyColor(days)}">${days}</div>
+        <div class="days-label">天后</div>
+      </div>
+      <div class="avatar" style="background:${COLORS[c.color].bg};color:${COLORS[c.color].color};width:36px;height:36px;font-size:12px;">${initials(c.name)}</div>
+      <div class="event-info">
+        <div class="event-name">${c.name} · ${e.type}</div>
+        <div class="event-meta">${c.relation}${c.company ? ' · ' + c.company : ''} · ${e.date}</div>
+      </div>
+      <button class="action-btn" onclick="openDetail(${c.id})"><i class="ti ti-history"></i> 记录</button>
+    </div>
+  `).join('');
+}
+
+function renderContacts() {
+  const grid = document.getElementById('contacts-grid');
+  if (!contacts.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-users"></i>还没有联系人</div>';
+    return;
+  }
+  grid.innerHTML = contacts.map(c => `
+    <div class="contact-card" onclick="openDetail(${c.id})">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="avatar" style="background:${COLORS[c.color].bg};color:${COLORS[c.color].color};margin-bottom:0;">${initials(c.name)}</div>
+        <button class="icon-btn" onclick="event.stopPropagation();openEditContact(${c.id})" aria-label="编辑"><i class="ti ti-edit"></i></button>
+      </div>
+      <div class="contact-name">${c.name}</div>
+      <div class="contact-role">${c.relation}${c.company ? ' · ' + c.company : ''}</div>
+      <div style="margin-top:8px;font-size:12px;color:#8a8680;line-height:1.8;">
+        ${c.events.map(e => `<i class="ti ti-calendar" style="font-size:12px;"></i> ${e.type} · ${daysUntil(e.date)}天后`).join('<br>')}
+      </div>
+      <div style="margin-top:6px;font-size:12px;color:#a09d98;">
+        <i class="ti ti-gift" style="font-size:12px;"></i> 送出${c.giftsGiven.length}件 · 收到${c.giftsReceived.length}件
+      </div>
+    </div>
+  `).join('');
+}
+
+function openDetail(id) {
+  currentContactId = id;
+  renderDetail();
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function renderDetail() {
+  const c = contacts.find(x => x.id === currentContactId);
+  const col = COLORS[c.color];
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div class="avatar" style="background:${col.bg};color:${col.color};width:46px;height:46px;font-size:16px;">${initials(c.name)}</div>
+      <div style="flex:1;">
+        <div style="font-size:17px;font-weight:700;">${c.name}</div>
+        <div style="font-size:13px;color:#8a8680;">${c.relation}${c.company ? ' · ' + c.company : ''} · ${c.events.map(e => e.type + ' ' + e.date).join(' / ')}</div>
+      </div>
+      <button class="icon-btn" onclick="openEditContact(${c.id})" aria-label="编辑"><i class="ti ti-edit"></i></button>
+    </div>
+    ${c.notes ? `<div class="detail-notes"><i class="ti ti-notes"></i> ${c.notes}</div>` : ''}
+    <hr class="divider">
+    <div class="gift-section-title">
+      <span><i class="ti ti-arrow-up-right"></i> 我送出的礼物</span>
+      <button class="action-btn" onclick="toggleAddGift('given')" style="font-size:12px;padding:4px 10px;"><i class="ti ti-plus"></i> 记录</button>
+    </div>
+    <div class="add-gift-form" id="form-given">
+      <div class="form-row" style="margin-bottom:8px;">
+        <input type="text" id="gift-given-name" placeholder="礼物名称" />
+        <input type="text" id="gift-given-occasion" placeholder="场合" />
+      </div>
+      <div class="form-row" style="margin-bottom:8px;">
+        <input type="date" id="gift-given-date" />
+        <input type="text" id="gift-given-note" placeholder="备注（可选）" />
+      </div>
+      <div style="text-align:right;"><button class="btn-primary" style="font-size:13px;padding:7px 16px;" onclick="saveGift('given')">保存</button></div>
+    </div>
+    <div class="gift-history">
+      ${c.giftsGiven.length ? c.giftsGiven.map(g => giftItemHTML(g, 'given')).join('') : '<div style="font-size:13px;color:#a09d98;padding:6px 0;">暂无记录</div>'}
+    </div>
+    <hr class="divider">
+    <div class="gift-section-title">
+      <span><i class="ti ti-arrow-down-left"></i> TA 送来的礼物</span>
+      <button class="action-btn" onclick="toggleAddGift('received')" style="font-size:12px;padding:4px 10px;"><i class="ti ti-plus"></i> 记录</button>
+    </div>
+    <div class="add-gift-form" id="form-received">
+      <div class="form-row" style="margin-bottom:8px;">
+        <input type="text" id="gift-received-name" placeholder="礼物名称" />
+        <input type="text" id="gift-received-occasion" placeholder="场合" />
+      </div>
+      <div class="form-row" style="margin-bottom:8px;">
+        <input type="date" id="gift-received-date" />
+        <input type="text" id="gift-received-note" placeholder="备注（可选）" />
+      </div>
+      <div style="text-align:right;"><button class="btn-primary" style="font-size:13px;padding:7px 16px;" onclick="saveGift('received')">保存</button></div>
+    </div>
+    <div class="gift-history">
+      ${c.giftsReceived.length ? c.giftsReceived.map(g => giftItemHTML(g, 'received')).join('') : '<div style="font-size:13px;color:#a09d98;padding:6px 0;">暂无记录</div>'}
+    </div>
+  `;
+}
+
+function giftItemHTML(g, type) {
+  return `
+    <div class="gift-item">
+      <i class="ti ti-gift" style="font-size:18px;color:#a09d98;margin-top:2px;"></i>
+      <div class="gift-item-info">
+        <div class="gift-item-name">${g.name}</div>
+        <div class="gift-item-meta">${g.occasion} · ${g.date}${g.note ? ' · ' + g.note : ''}</div>
+      </div>
+      <button class="gift-item-del" onclick="deleteGift('${type}','${g.id}')" aria-label="删除"><i class="ti ti-x"></i></button>
+    </div>
+  `;
+}
+
+function toggleAddGift(type) {
+  document.getElementById('form-' + type).classList.toggle('open');
+}
+
+function saveGift(type) {
+  const c = contacts.find(x => x.id === currentContactId);
+  const name = document.getElementById(`gift-${type}-name`).value.trim();
+  if (!name) { alert('请输入礼物名称'); return; }
+  const gift = {
+    id: 'x' + Date.now(), name,
+    occasion: document.getElementById(`gift-${type}-occasion`).value.trim() || '未知场合',
+    date: document.getElementById(`gift-${type}-date`).value || new Date().toISOString().split('T')[0],
+    note: document.getElementById(`gift-${type}-note`).value.trim(),
+  };
+  if (type === 'given') c.giftsGiven.unshift(gift);
+  else c.giftsReceived.unshift(gift);
+  renderDetail();
+  renderContacts();
+}
+
+function deleteGift(type, gid) {
+  const c = contacts.find(x => x.id === currentContactId);
+  if (type === 'given') c.giftsGiven = c.giftsGiven.filter(g => g.id !== gid);
+  else c.giftsReceived = c.giftsReceived.filter(g => g.id !== gid);
+  renderDetail();
+  renderContacts();
+}
+
+function deleteContact() {
+  if (!confirm(`确定要删除这位联系人吗？`)) return;
+  contacts = contacts.filter(c => c.id !== currentContactId);
+  closeModal('detail-modal');
+  renderUpcoming();
+  renderContacts();
+}
+
+function openAddContact() {
+  editingContactId = null;
+  document.getElementById('contact-form-title').textContent = '添加联系人';
+  ['cf-name','cf-company','cf-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cf-relation').value = '家人';
+  document.getElementById('cf-event-type').value = '生日';
+  document.getElementById('cf-date').value = '';
+  document.getElementById('contact-form-modal').classList.add('open');
+}
+
+function openEditContact(id) {
+  editingContactId = id;
+  const c = contacts.find(x => x.id === id);
+  document.getElementById('contact-form-title').textContent = `编辑 · ${c.name}`;
+  document.getElementById('cf-name').value = c.name;
+  document.getElementById('cf-company').value = c.company;
+  document.getElementById('cf-notes').value = c.notes;
+  document.getElementById('cf-relation').value = c.relation;
+  document.getElementById('cf-event-type').value = c.events[0]?.type || '生日';
+  document.getElementById('cf-date').value = c.events[0]?.date || '';
+  closeModal('detail-modal');
+  document.getElementById('contact-form-modal').classList.add('open');
+}
+
+function saveContact() {
+  const name = document.getElementById('cf-name').value.trim();
+  if (!name) { alert('请输入姓名'); return; }
+  const date = document.getElementById('cf-date').value || getNextDate(30);
+  if (editingContactId) {
+    const c = contacts.find(x => x.id === editingContactId);
+    c.name = name;
+    c.relation = document.getElementById('cf-relation').value;
+    c.company = document.getElementById('cf-company').value.trim();
+    c.notes = document.getElementById('cf-notes').value.trim();
+    c.events[0] = { type: document.getElementById('cf-event-type').value, date };
+  } else {
+    contacts.push({
+      id: nextId++, name,
+      relation: document.getElementById('cf-relation').value,
+      company: document.getElementById('cf-company').value.trim(),
+      notes: document.getElementById('cf-notes').value.trim(),
+      color: (nextId - 1) % COLORS.length,
+      events: [{ type: document.getElementById('cf-event-type').value, date }],
+      giftsGiven: [], giftsReceived: []
+    });
+  }
+  closeModal('contact-form-modal');
+  renderUpcoming();
+  renderContacts();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['upcoming','contacts'][i] === tab));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  if (tab === 'contacts') renderContacts();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+renderUpcoming();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
